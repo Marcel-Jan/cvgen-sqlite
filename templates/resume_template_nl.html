@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resume of {{ persons.Name }}</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin-top: 4cm;
+
+            @top-right {
+                content: element(header);
+                margin-top: 5cm;
+            }
+
+            @bottom-center {
+                content: "CV {{ persons.Name }}, " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 10px;
+                color: #555;
+            }
+        }
+        header {
+            position: fixed;
+            top: -2cm;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-bottom: 4px solid #0056b3;
+            /* border: 0.1cm solid black; */
+        }
+        body {
+            /* border: 0.1cm solid red; */
+            box-decoration-break: clone;
+            font-family: 'Roboto', sans-serif; /* Gebruik een bedrijfslettertype */
+            font-size: x-small;
+            background-color: #f9f9f9;        /* Bedrijfsachtergrondkleur */
+            color: #444;                     /* Primaire tekstkleur */
+            line-height: 1.6;
+        }
+        h1, h2 {
+            margin-top: 60px;
+            color: #0056b3; /* Bedrijfskleur voor koppen */
+        }
+        .section {
+            margin-top: 10px;
+            border-left: 4px solid #0056b3; /* Accentkleur aan de linkerzijde */
+            padding: 20px;
+        }
+        .intro-text {
+            border: 0px;
+            white-space: pre-wrap;
+            font-size: x-small;
+        }
+        .contact-and-picture{
+            margin-top: 60px;
+            border:0px;
+        }
+        .contact-and-picture::after{
+            content:"";
+            display:block;
+            clear:both;
+        }
+        .left-picture{
+            float: left;
+            width: 45%;
+        }
+        .right-contact{
+            float: right;
+            width: 55%;
+            font-size: small;
+        }
+        .experience-text {
+            border: 0px;
+            /* white-space: pre-wrap; */
+            font-size: x-small;
+        }
+        .skills-container {
+            flex-direction: column;
+            gap: 10px;
+        }
+        .skill-row {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 5px 0;
+        }
+        .skill-name {
+            flex: 1; /* Name column takes up more space */
+            font-weight: normal;
+            font-size: small;
+            flex-grow: 1;
+            flex: 1 1 66%;
+        }
+        .skill-level {
+            flex: 0; /* Level column takes only as much space as it needs */
+            flex-grow: 1;
+            white-space: nowrap;
+        }
+        @page :first {
+            @top-right {
+                content: none;
+            }
+        }
+    </style>
+    
+</head>
+
+<header>
+    {% for setting in settings %}
+        {% if setting.SettingName == "CompanyLogo" %}
+            <img src="{{ setting.SettingValue }}" alt="Company logo"
+                style="width: 20%; max-height: 150px; object-fit: contain; float: right">
+        {% endif %}
+    {% endfor %}
+</header>
+
+<body>
+    {% if gdprcompliant %}
+        <div class="contact-and-picture">
+            
+            <div class="right-contact">
+                <p>Naam: {{ persons.Name }}</p>
+                <p>Nationaliteit: {{ contact.Nationality }}</p>
+                <p>Woonplaats: {{ contact.Residence }}</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="contact-and-picture">
+            <div class="left-picture">
+                <img src="{{ persons.LinkToImage }}" alt="{{ persons.Name }}" 
+                style="width: 90%; height: 90%;">
+            </div>
+            
+            <div class="right-contact">
+                <p>Naam: {{ persons.Name }}</p>
+                <p>Geboortejaar: {{ contact.BirthYear }}</p>
+                <p>Nationaliteit: {{ contact.Nationality }}</p>
+                <p>Woonplaats: {{ contact.Residence }}</p>
+                <p>Email: <a href="mailto:{{ contact.Email }}"> {{ contact.Email }} </a></p>
+                <p>Tel: {{ contact.Phone }}</p>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="section">
+        <h2>Samenvatting</h2>
+        <div class="intro-text">
+            <p>{{ introtexts.IntroductionText }}</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Top projecten</h2>
+        {% for project in projects %}
+            <h3>{{ project.ProjectName }}</h3>
+            <!-- <p><strong>Doel:</strong> {{ project.purpose }}</p> -->
+            <p><strong>Rol:</strong> {{ project.ProjectRoleName }}</p>
+            <p><strong>Doel:</strong> {{ project.Purpose }}</p>
+            <p><strong>Beschrijving:</strong> {{ project.ProjectRoleText }}</p>
+            <p><strong>Trots op:</strong> {{ project.ProudOf }}</p>
+        {% endfor %}
+    </div>
+
+    {% if experiences|length > 0 %}
+        <div class="section">
+            <h2>Relevante werkervaring</h2>
+            {% for experience in experiences %}
+                <h4>Organisatie: {{ experience.OrganisationName }}</h4>
+                <h4>Rol: {{ experience.JobTitle }}</h4>
+                {% if experience.EndDate == None %}
+                    <p><strong>Periode:</strong> {{ experience.StartDate[:-3] }} - heden</p>
+                {% else %}
+                    <p><strong>Periode:</strong> {{ experience.StartDate[:-3] }} - {{ experience.EndDate[:-3] }}</p>
+                {% endif %}
+                <p><strong>Beschrijving:</strong>
+                <div class="experience-text"></p>
+                    <p>{{ experience.Description }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if certificates|length > 0 %}
+        <div class="section">
+            <h2>Certificaten</h2>
+            <table style="width:100%">
+                <tr>
+                    <th>Naam</th>
+                    <th>Instituut</th>
+                    <th>Jaar</th>
+                </tr>
+                {% for certificate in certificates %}
+                    <tr>
+                        <td>{{ certificate.CertificateName }}</td>
+                        <td>{{ certificate.Institution }}</td>
+                        <td><a href="{{ certificate.CredentialLink }}">{{ certificate.IssueYear }}</a></td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% endif %}
+
+    {% if educations|length > 0 %}
+        <div class="section">
+            <h2>Opleidingen</h2>
+            <table style="width:100%">
+                <tr>
+                    <th>Opleiding</th>
+                    <th>Instituut</th>
+                    <th>Jaar</th>
+                </tr>
+                {% for education in educations %}
+                    <tr>
+                        <td>{{ education.FieldOfStudy }}</td>
+                        <td>{{ education.Institution }}</td>
+                        <td>{{ education.GraduationYear }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% endif %}
+
+    {% if activities|length > 0 %}
+        <div class="section">
+            <h2>Nevenactiviteiten</h2>
+            {% for activity in activities %}
+                <p>{{ activity.ActivityName }} ( {{ activity.StartYear }} - heden )</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if speakingengagements|length > 0 %}
+        <div class="section">
+            <h2>Presentaties op congressen</h2>
+            {% for speach in speakingengagements %}
+                <p>{{ speach.Title }}, {{ speach.Event }} ( {{ speach.EventYear }} )</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if publications|length > 0 %}
+        <div class="section">
+            <h2>Publicaties</h2>
+            {% for publication in publications %}
+                <p><a href="{{ PublicationLink }}">{{ publication.PublicationName }}</a> ( {{ publication.PublicationDate }} )</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if skills|length > 0 %}
+        <div class="section">
+            <h2>Vaardigheden</h2>
+                
+            {% set ns = namespace(current_category = None) %}
+            <div class="skills-container">
+                {% for skill in skills %}
+                        {% if skill.CategoryName != ns.current_category %}
+                            {% set ns.current_category = skill.CategoryName %}
+                            <h4>{{ skill.CategoryName }}</h4>
+                        {% endif %}
+                        <div class="skill-row">
+                            <div class="skill-name">{{ skill.SkillName }}</div>
+                            <div class="skill-level">{% for i in range(skill.Level*2) %}<span>&#9619;</span>{% endfor %}</div>
+                        </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    
+</body>
+</html>

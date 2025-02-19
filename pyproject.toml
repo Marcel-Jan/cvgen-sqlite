@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "cvgen-sqlite"
+version = "0.1.0"
+description = "CV Generator with SQLite"
+authors = ["Marcel-Jan Krijgsman <marcel-jan.krijgsman@dikw.com>"]
+readme = "README.md"
+packages = [{include = "cvgen_sqlite", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+streamlit = "^1.41.1"
+weasyprint = "^63.1"
+streamlit-sortables = "^0.2.0"
+deepl = "^1.21.0"
+python-dotenv = "^1.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
