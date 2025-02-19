@@ -3,6 +3,8 @@
 ## Overview
 The CV Generator is a Python-based application built with Streamlit, designed to help users create a tailored and professional CV effortlessly. One of its key advantages is the separation of content and formatting, allowing users to focus on their achievements while maintaining a consistent and polished layout.
 
+[![Watch the video](https://img.youtube.com/vi/4YmTrS3U6wc/maxresdefault.jpg)](https://youtu.be/4YmTrS3U6wc)
+
 ## Features
 - **Content-First Approach**: Users enter their information without worrying about formatting.
 - **Headline and Personal Info**: The CV starts with essential details and a brief headline.
@@ -32,16 +34,16 @@ To run the CV Generator locally, follow these steps:
    ```
 
 ## Installation - Docker container
-cvgen-sqlite is available as Docker image: [https://hub.docker.com/r/marceljan/cvgen-sqlite]
+cvgen-sqlite is available as Docker image: https://hub.docker.com/r/marceljan/cvgen-sqlite
 To run cvgen-sqlite as Docker container:
-1. Install Docker Desktop: [https://www.docker.com/products/docker-desktop/]
+1. Install Docker Desktop: https://www.docker.com/products/docker-desktop/
 
 2. Start a cvgen-sqlite Docker container:
    ```sh
    docker run -d -p 8501:8501 --name cvgen-sqlite --platform linux/amd64 -d cvgen-sqlite
    ```
 
-3. Go to the app in your browser: [https://localhost:8501]
+3. Go to the app in your browser: https://localhost:8501
 
 
 ## Usage
