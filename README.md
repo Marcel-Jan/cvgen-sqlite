@@ -9,7 +9,7 @@ The CV Generator is a Python-based application built with Streamlit, designed to
 - **Project Selection & Sorting**: Users can select their most impactful projects, reorder them, and exclude specific ones as needed.
 - **One-Click Generation**: After refining the content, users simply press a button to generate their CV.
 
-## Installation
+## Installation - local installation
 To run the CV Generator locally, follow these steps:
 
 1. Clone this repository:
@@ -31,11 +31,26 @@ To run the CV Generator locally, follow these steps:
    streamlit run app.py
    ```
 
+## Installation - Docker container
+cvgen-sqlite is available as Docker image: [https://hub.docker.com/r/marceljan/cvgen-sqlite]
+To run cvgen-sqlite as Docker container:
+1. Install Docker Desktop: [https://www.docker.com/products/docker-desktop/]
+
+2. Start a cvgen-sqlite Docker container:
+   ```sh
+   docker run -d -p 8501:8501 --name cvgen-sqlite --platform linux/amd64 -d cvgen-sqlite
+   ```
+
+3. Go to the app in your browser: [https://localhost:8501]
+
+
 ## Usage
 1. Open the application in your browser.
-2. Enter your personal details and a short headline.
-3. Select and sort the projects you want to highlight.
-4. Click the **Generate CV** button to create a polished CV.
+2. Go to the StartHere page and enter your personal details.
+3. On the Headline page enter the headline of your resume.
+4. Enter the projects you want to highlight.
+5. Enter work experience, education, certification and other details.
+6. Go to the Generate page, order your top projects. And click the **Generate Resume** button to create a polished CV. Then download it as PDF format.
 
 ## Customization
 The app allows customization of:
