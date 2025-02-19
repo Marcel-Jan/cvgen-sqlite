@@ -40,7 +40,6 @@ To run the CV Generator locally, follow these steps:
 ## Customization
 The app allows customization of:
 - CV layout and style (modify the template files).
-- Supported export formats (extend the functionality as needed).
 
 ## Contributions
 Contributions are welcome! Feel free to open issues or submit pull requests.
