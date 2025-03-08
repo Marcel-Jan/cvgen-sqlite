@@ -1,0 +1,5 @@
+streamlit
+weasyprint
+streamlit-sortables
+deepl
+python-dotenv
