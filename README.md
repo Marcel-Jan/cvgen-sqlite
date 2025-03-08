@@ -45,6 +45,9 @@ To run cvgen-sqlite as Docker container:
 
 3. Go to the app in your browser: https://localhost:8501
 
+You can also watch the video how to run your own Docker container with this application here:
+[![Watch the video](https://img.youtube.com/vi/fjQnI13CLeQ/maxresdefault.jpg)](https://youtu.be/fjQnI13CLeQ)
+
 
 ## Usage
 1. Open the application in your browser.
