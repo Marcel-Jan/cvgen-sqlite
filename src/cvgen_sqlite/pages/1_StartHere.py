@@ -12,7 +12,7 @@ import datetime
 db_path = st.session_state.database
 
 # Titel van de app
-st.title("Resume - Create User")
+st.title("CV Generator - Create User")
 st.markdown("To create your resume you need to enter some information.")
 
 
