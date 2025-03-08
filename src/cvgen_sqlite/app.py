@@ -31,7 +31,7 @@ if 'deeplapikey' not in st.session_state:
 st.session_state.deeplapikey = DEEPL_APIKEY
 
 # Configuratie
-st.set_page_config(page_title="CV Builder", page_icon="📄", layout="wide")
+st.set_page_config(page_title="CV Generator", page_icon="📄", layout="wide")
 
 
 # Check that the database exists
@@ -46,7 +46,7 @@ if not Path(db_path).exists():
 
 
 # Startpagina
-st.title("Resume Builder")
+st.title("CV Generator")
 st.markdown("""
 Welkome to the CV Generator! Use the sidebar to navigate through the pages.
 """)
