@@ -28,6 +28,7 @@ def fetch_resume_data(db_path, person_id=1, language_id=None,
 
     # Get contact details
     contact = fetch_contact(db_path, person_id, language_id)
+    # st.write(f"contact: {contact}")
     resume_data['contact'] = contact
 
     # Get intro text columns
