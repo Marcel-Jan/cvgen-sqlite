@@ -106,13 +106,15 @@ print(f"source_lang {source_lang}")
 print(f"target_lang {target_lang}")
 
 # translated_intro = GoogleTranslator(source=source_lang, target=target_lang).translate(introduction['IntroductionText'])
-translated_intro = deepl_client.translate_text(introtext, source_lang=source_lang, target_lang=target_lang)
-translated_introtext = st.text_area("Translated resume headline:", translated_intro, text_area_height)
+# If introtext is not empty and the deeplapikey is set, translate the introtext
+if introtext and deeplapikey:
+    translated_intro = deepl_client.translate_text(introtext, source_lang=source_lang, target_lang=target_lang)
+    translated_introtext = st.text_area("Translated resume headline:", translated_intro, text_area_height)
 
-# Save translated introduction
-st.write("### Save translated headline")
-saveintro = st.button("Save translated headline")
+    # Save translated introduction
+    st.write("### Save translated headline")
+    saveintro = st.button("Save translated headline")
 
-if saveintro:
-    upsert_introduction(db_path, PersonId, translated_introtext, dest_language_id)
-    st.success("Translated headline successfully saved!")
+    if saveintro:
+        upsert_introduction(db_path, PersonId, translated_introtext, dest_language_id)
+        st.success("Translated headline successfully saved!")

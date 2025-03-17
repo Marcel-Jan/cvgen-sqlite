@@ -58,7 +58,7 @@ if st.checkbox("Show file locations (for debugging)"):
     st.write(f"Template path: {template_path}")
 
 # Selecteer de gebruiker
-st.sidebar.title("User")
+# st.sidebar.title("User")
 
 persons = fetch_personnames(db_path)
 
@@ -86,7 +86,7 @@ try:
     st.session_state.selected_person = selected_person
 
     # Toon de geselecteerde gebruiker
-    # st.write(f"Selected user: {selected_person}, person_id: {selected_person_id}, ID: {st.session_state.selected_person_id}")
+    st.write(f"Selected user: {selected_person}, person_id: {selected_person_id}, ID: {st.session_state.selected_person_id}")
 
     # Fetch contact details
     contact = fetch_contact(db_path, selected_person_id, 1)

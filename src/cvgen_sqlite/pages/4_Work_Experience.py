@@ -170,18 +170,19 @@ print(f"target_lang {target_lang}")
 
 
 # Translate the activity with Google Translate
-translated_jobtitle = deepl_client.translate_text(exp_jobtitle, source_lang=source_lang, target_lang=target_lang)
-translated_shortdesc = deepl_client.translate_text(exp_shortdesc, source_lang=source_lang, target_lang=target_lang)
-translated_description = deepl_client.translate_text(exp_description, source_lang=source_lang, target_lang=target_lang)
+if exp_jobtitle and exp_shortdesc and exp_description and deeplapikey:
+    translated_jobtitle = deepl_client.translate_text(exp_jobtitle, source_lang=source_lang, target_lang=target_lang)
+    translated_shortdesc = deepl_client.translate_text(exp_shortdesc, source_lang=source_lang, target_lang=target_lang)
+    translated_description = deepl_client.translate_text(exp_description, source_lang=source_lang, target_lang=target_lang)
 
-edited_jobtitle = st.text_input("Translated job title:", translated_jobtitle)
-edited_shortdesc = st.text_input("Translated description in one sentence:", translated_shortdesc)
-edited_description = st.text_area("Translated full description:", translated_description, text_area_height)
+    edited_jobtitle = st.text_input("Translated job title:", translated_jobtitle)
+    edited_shortdesc = st.text_input("Translated description in one sentence:", translated_shortdesc)
+    edited_description = st.text_area("Translated full description:", translated_description, text_area_height)
 
-addtransbutton = st.button("Add Translated Work Experience Details")
+    addtransbutton = st.button("Add Translated Work Experience Details")
 
-# Verwerk het formulier
-if addtransbutton:
-    upsert_experience(db_path, PersonId, selected_org_id, edited_jobtitle, edited_shortdesc,
-                            edited_description, start_date, end_date, dest_language_id)
-    st.success("Translated work experience details successfully added!")
+    # Verwerk het formulier
+    if addtransbutton:
+        upsert_experience(db_path, PersonId, selected_org_id, edited_jobtitle, edited_shortdesc,
+                                edited_description, start_date, end_date, dest_language_id)
+        st.success("Translated work experience details successfully added!")
