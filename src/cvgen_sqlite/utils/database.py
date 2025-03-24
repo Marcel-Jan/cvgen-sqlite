@@ -107,6 +107,7 @@ def fetch_countries(db_path, language_id):
 def fetch_nationalityid(db_path, nationality, language_id):
     """Fetch the Nationality ID for a given
        country name and language id."""
+    print(f"nationality: {nationality}, language_id: {language_id}")
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     country_query = """
@@ -194,12 +195,12 @@ def add_user(db_path, Name, LinkToImage, LinkToVideo):
     conn.close()
 
 
-# Contact info
 def fetch_contact(db_path, person_id, language_id):
     """Fetch contact details for the candidate."""
     print(f"fetch_contact: {person_id}, {language_id}")
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    
     contact_query = """
         SELECT strftime('%Y', Birthday) AS BirthYear,
                c.Nationality, Residence, Email, Phone
@@ -208,37 +209,66 @@ def fetch_contact(db_path, person_id, language_id):
         WHERE pc.PersonId = ?
         AND c.LanguageId = ?
     """
+    
+    print(f"Query being executed with params: {person_id}, {language_id}")
     cursor.execute(contact_query, (person_id, language_id))
+    
+    # Fetch the result
     contact_details = cursor.fetchone()
-    print(f"fetch_contact: {contact_details}")
+    # print(f"Fetched row: {contact_details}")
+    
+    # Close connection regardless of success/failure
     conn.close()
+    
+    # Handle None case explicitly
+    if contact_details is None:
+        print("No matching record found")
+        return None
+    
+    # Return dictionary with explicit column mapping
     return {
         "BirthYear": contact_details[0],
         "Nationality": contact_details[1],
         "Residence": contact_details[2],
         "Email": contact_details[3],
-        "Phone": contact_details[4],
+        "Phone": contact_details[4]
     }
 
 
-def add_contact(db_path, PersonId, Birthday, Nationality,
-                Residence, Email, Phone, LanguageId):
+def add_contact(db_path, PersonId, Birthday, Nationality, Residence, Email, Phone, LanguageId):
     """Insert a new contact details into the database."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    nationalityid = fetch_nationalityid(db_path, Nationality, LanguageId)
-
-    contact_query = """
+    try:
+        nationalityid = fetch_nationalityid(db_path, Nationality, LanguageId)
+        
+        contact_query = """
         INSERT INTO PersonContact
-            (PersonId, Birthday, NationalityId, Residence,
-             Email, Phone, LanguageId)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """
-    cursor.execute(contact_query, (PersonId, Birthday, nationalityid,
-                                   Residence, Email, Phone, LanguageId))
-    conn.commit()
-    conn.close()
+        (PersonId, Birthday, NationalityId, Residence, Email, Phone)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """
+        
+        cursor.execute(contact_query, (
+            PersonId, Birthday, nationalityid, Residence, Email, Phone
+        ))
+        
+        # Verify the insert worked
+        rows_affected = cursor.rowcount
+        # print(f"Rows affected: {rows_affected}")
+        
+        if rows_affected == 0:
+            raise ValueError("No rows were inserted")
+            
+        conn.commit()
+        return True
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Error during insertion: {str(e)}")
+        return False
+    finally:
+        conn.close()
 
 
 # Organisations

@@ -4,12 +4,13 @@ import streamlit as st
 from dotenv import set_key
 from utils.database import add_user, fetch_languages, fetch_countries
 from utils.database import add_contact, fetch_personid_byname, fetch_personbyid
-from utils.database import upsert_settings, fetch_settings
+from utils.database import upsert_settings, fetch_settings, fetch_personnames
 import datetime
 
 
 # Path to database and templates
 db_path = st.session_state.database
+person_id = None
 
 # Titel van de app
 st.title("CV Generator - Create User")
@@ -28,17 +29,33 @@ if submitted:
     add_user(db_path, username, linktoimage, linktovideo)
     st.success("Account created!")
 
-person_id = fetch_personid_byname(db_path, username)
-
 # Fetch list of all languages
 languages = fetch_languages(db_path)
 language_names = [language['LanguageName'] for language in languages]
 
 st.title("Contact Details")
 
+person_id = fetch_personid_byname(db_path, username)
+# st.write(f"Person ID: {person_id}")
+
+# If the person_id is not set, give a select box to select the user
+if person_id is None:
+    persons = fetch_personnames(db_path)
+
+    # Maak een lijst van namen
+    person_names = [person['Name'] for person in persons]
+
+    # Streamlit multiselect for project selection
+    selected_person = st.selectbox(
+        'Select the user:',
+        options=person_names
+    )
+    person_id = fetch_personid_byname(db_path, selected_person)
+
+
 # Streamlit multiselect for language selection
 selected_language = st.selectbox(
-    'Select the language for your contact details:',
+    'Select the language to view country name and nationality:',
     options=language_names
 )
 
@@ -74,9 +91,10 @@ full_residence = residence + ", " + country
 
 submitted = st.button("Add contact details")
 
-if submitted:
+# st.write(f"Person ID: {person_id}")
+if submitted and person_id is not None:
     add_contact(db_path, person_id, birthdate, nationality, full_residence,
-	            email, phone, selected_language_id)
+                email, phone, selected_language_id)
     st.success("Contact details successfully added!")
 
 
@@ -92,6 +110,9 @@ apisubmitted = st.button("Save API Keys")
 if apisubmitted:
     set_key('.env', 'DEEPL_APIKEY', deepl_apikey)
     st.success("API keys saved!")
+
+    # Verify that the key is set
+    st.write("API key saved.")
 
 
 # Choose the company logo url

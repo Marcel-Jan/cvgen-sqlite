@@ -152,29 +152,30 @@ print(f"source_lang {source_lang}")
 print(f"target_lang {target_lang}")
 
 # Translate the activity with Google Translate
-translated_projectname = deepl_client.translate_text(projectname, source_lang=source_lang, target_lang=target_lang)
-translated_rolename = deepl_client.translate_text(project_role, source_lang=source_lang, target_lang=target_lang)
+if projectname and project_role and deeplapikey:
+    translated_projectname = deepl_client.translate_text(projectname, source_lang=source_lang, target_lang=target_lang)
+    translated_rolename = deepl_client.translate_text(project_role, source_lang=source_lang, target_lang=target_lang)
 
-if project_purpose:
-    translated_purpose = deepl_client.translate_text(project_purpose, source_lang=source_lang, target_lang=target_lang)
-else:
-    translated_purpose = ""
+    if project_purpose:
+        translated_purpose = deepl_client.translate_text(project_purpose, source_lang=source_lang, target_lang=target_lang)
+    else:
+        translated_purpose = ""
 
-translated_roletext = deepl_client.translate_text(project_role_text, source_lang=source_lang, target_lang=target_lang)
-translated_proudof = deepl_client.translate_text(project_proud_of, source_lang=source_lang, target_lang=target_lang)
-edited_projectname = st.text_area("Translated project name:", translated_projectname)
-edited_rolename = st.text_area("Translated role name:", translated_rolename)
-edited_purpose = st.text_area("Translated purpose:", translated_purpose)
-edited_roletext = st.text_area("Translated role description:", translated_roletext)
-edited_proudof = st.text_area("Translated proud of:", translated_proudof)
+    translated_roletext = deepl_client.translate_text(project_role_text, source_lang=source_lang, target_lang=target_lang)
+    translated_proudof = deepl_client.translate_text(project_proud_of, source_lang=source_lang, target_lang=target_lang)
+    edited_projectname = st.text_area("Translated project name:", translated_projectname)
+    edited_rolename = st.text_area("Translated role name:", translated_rolename)
+    edited_purpose = st.text_area("Translated purpose:", translated_purpose)
+    edited_roletext = st.text_area("Translated role description:", translated_roletext)
+    edited_proudof = st.text_area("Translated proud of:", translated_proudof)
 
-addtransbutton = st.button("Add Translated Project Details")
+    addtransbutton = st.button("Add Translated Project Details")
 
-# Verwerk het formulier
-if addtransbutton:
-    # add_project(db_path, PersonId, selected_org, edited_projectname, edited_rolename, edited_roletext,
-    #                 edited_proudof, start_date, end_date, edited_purpose, dest_language_id)
-    upsert_projectrole(db_path, PersonId, selected_orgid, edited_projectname, edited_rolename,
-                       edited_roletext, edited_proudof, start_date, end_date,
-                       edited_purpose, dest_language_id)
-    st.success("Translated project details successfully added!")
+    # Verwerk het formulier
+    if addtransbutton:
+        # add_project(db_path, PersonId, selected_org, edited_projectname, edited_rolename, edited_roletext,
+        #                 edited_proudof, start_date, end_date, edited_purpose, dest_language_id)
+        upsert_projectrole(db_path, PersonId, selected_orgid, edited_projectname, edited_rolename,
+                        edited_roletext, edited_proudof, start_date, end_date,
+                        edited_purpose, dest_language_id)
+        st.success("Translated project details successfully added!")

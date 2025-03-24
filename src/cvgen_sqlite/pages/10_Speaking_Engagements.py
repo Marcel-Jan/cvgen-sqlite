@@ -26,13 +26,13 @@ speakingengagements = fetch_speaking(db_path, PersonId)
 # Dropdown menu for selecting the speaking engagement
 speech_names = [speech['Title'] for speech in speakingengagements]
 # Add option for new activity
-speech_names.append("New activity")
+speech_names.append("New speaking engagement")
 selected_speechname = st.selectbox(
     'Select a speaking engagement:',
     options=speech_names
 )
 
-if selected_speechname == "New activity":
+if selected_speechname == "New speaking engagement":
     upsert_title = st.text_input("Title", "")
     upsert_event = st.text_input("Event", "")
     upsert_eventdate = st.date_input("Date of speaking engagement", min_value=datetime.date(2011, 2, 17))
