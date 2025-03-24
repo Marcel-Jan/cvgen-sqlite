@@ -198,17 +198,16 @@ def add_user(db_path, Name, LinkToImage, LinkToVideo):
 def fetch_contact(db_path, person_id, language_id):
     """Fetch contact details for the candidate."""
     print(f"fetch_contact: {person_id}, {language_id}")
-    
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
     contact_query = """
-    SELECT strftime('%Y', Birthday) AS BirthYear,
-           c.Nationality, Residence, Email, Phone
-    FROM PersonContact pc
-    INNER JOIN Countries c ON c.CountryId = pc.NationalityId
-    WHERE pc.PersonId = ?
-    AND c.LanguageId = ?
+        SELECT strftime('%Y', Birthday) AS BirthYear,
+               c.Nationality, Residence, Email, Phone
+        FROM PersonContact pc 
+        INNER JOIN Countries c ON c.CountryId = pc.NationalityId
+        WHERE pc.PersonId = ?
+        AND c.LanguageId = ?
     """
     
     print(f"Query being executed with params: {person_id}, {language_id}")

@@ -11,36 +11,21 @@ import datetime
 import os
 
 
-def fetch_resume_data(db_path, person_id=1, language_id=None,
-                      selected_project_ids=None,
-                      certificate_ids=None,
-                      experience_years_back=10):
+def fetch_resume_data(db_path, person_id, language_id=None, selected_project_ids=None,
+                      certificate_ids=None, **kwargs):
     """Fetch resume data and only include selected projects."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    resume_data = {}
-    persons = fetch_personbyid(db_path, person_id)[0]
-    resume_data['persons'] = persons
-
-    settings = fetch_settings(db_path)
-    resume_data['settings'] = settings
-
-    # Get contact details
-    contact = fetch_contact(db_path, person_id, language_id)
-    # st.write(f"contact: {contact}")
-    resume_data['contact'] = contact
-
-    # Get intro text columns
-    intro_texts = fetch_introduction(db_path, person_id, language_id)
-    # print(f"intro_texts: {intro_texts}")
-    # st.write(f"intro_texts: {intro_texts}")
-    # Remove None values from intro_texts
-    intro_texts = {k: v for k, v in intro_texts.items() if v is not None}
-    # st.write(f"intro_texts: {intro_texts}")
-    resume_data['introtexts'] = intro_texts
-    # print(f"resume_data['introtexts']: {resume_data['introtexts']}")
-
+    resume_data = {
+        "persons": fetch_personbyid(db_path, person_id)[0],
+        "settings": fetch_settings(db_path),
+        "contact": fetch_contact(db_path, person_id, language_id),
+        # Remove None values from intro_texts
+        "introtexts": {k: v for k, v in fetch_introduction(db_path, person_id, language_id).items() if v is not None},
+        "certificates": fetch_certifications(db_path, person_id),
+        "educations": fetch_educations(db_path, person_id, language_id),
+    }
 
     # Get only selected projects
     if selected_project_ids:
@@ -98,32 +83,35 @@ def fetch_resume_data(db_path, person_id=1, language_id=None,
         resume_data['projects'].append(project_data)
     
     # Get work experiences
+    experience_years_back = kwargs.get("experience_years_back", 10)
+    experience_section = kwargs.get("experience_section", "Full")
     experiences = fetch_experiences(db_path, person_id, language_id, experience_years_back)
-    resume_data['experiences'] = experiences
 
-    # Get certifications
-    certificates = fetch_certifications(db_path, person_id)
-    resume_data['certificates'] = certificates
+    # Add experience description if requested
+    if experience_section == "Brief":
+        for exp in experiences:
+            exp.pop("Description", None)  # Veilig verwijderen zonder KeyError
+    resume_data["experiences"] = experiences if experience_section != "None" else []
+    resume_data["experience_section"] = experience_section
 
-    # Get educations
-    educations = fetch_educations(db_path, person_id, language_id)
-    resume_data['educations'] = educations
+    # Optional sections
+    optional_sections_with_lang = {
+        "skillsadded": ("skills", fetch_skills),
+        "activitiesadded": ("activities", fetch_activities),
+    }
 
-    # Get skills
-    skills = fetch_skills(db_path, person_id, language_id)
-    resume_data['skills'] = skills
+    optional_sections_without_lang = {
+        "speakingadded": ("speakingengagements", fetch_speaking),
+        "publicationsadded": ("publications", fetch_publications),
+    }
 
-    # Get additional activities
-    activities = fetch_activities(db_path, person_id, language_id)
-    resume_data['activities'] = activities
+    for key, (section, func) in optional_sections_with_lang.items():
+        if kwargs.get(key, True):
+            resume_data[section] = func(db_path, person_id, language_id)
 
-    # Get speaking engagements
-    speakingengagements = fetch_speaking(db_path, person_id)
-    resume_data['speakingengagements'] = speakingengagements
-
-    # Get publications
-    publications = fetch_publications(db_path, person_id)
-    resume_data['publications'] = publications
+    for key, (section, func) in optional_sections_without_lang.items():
+        if kwargs.get(key, True):
+            resume_data[section] = func(db_path, person_id)
 
     conn.close()
     return resume_data
@@ -202,11 +190,6 @@ selected_language = st.selectbox(
 # Get the language ID for the selected language. It is just one value, not a list.
 selected_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == selected_language][0]
 
-
-# AVG /GDPR compliancy
-st.write("AVG / GDPR compliancy (means leaving out personal information like photo, phone number, mail address and your photo).")
-gdprcompliant = st.checkbox("Make the resume AVG / GDPR compliant (no photo, phone number, mail address).", value=False)
-
 # Add slider how many years back you want to see projects.
 project_years_back = st.slider('How many years back do you want to see projects?', 0, 20, 5)
 
@@ -230,32 +213,98 @@ ordered_project_names = selected_and_unselected_projects[0]['items']
 ordered_projects = [project for name in ordered_project_names for project in projects if project['ProjectName'] == name]
 ordered_project_ids = [project['ProjectId'] for project in ordered_projects if project['ProjectName'] in ordered_project_names]
 
-# Add slider how old work experience you want.
-experience_years_back = st.slider('How many years work experience do you want in your resume?', 0, 50, 10)
+
+with st.expander("Resume settings"):
+
+    # AVG /GDPR compliancy
+    st.write("AVG / GDPR compliancy (means leaving out personal information like phone number, mail address and your photo).")
+    resume_settings = {
+        "gdprcompliant": st.checkbox("Make the resume AVG / GDPR compliant.", value=False),
+        "experience_section": st.selectbox("Work experience section:", ("Full", "Brief", "None"), index=0),
+        "skillsadded": st.checkbox("Add skills section.", value=True),
+        "activitiesadded": st.checkbox("Add activities section.", value=True),
+        "speakingadded": st.checkbox("Add speaking engagements section.", value=True),
+        "publicationsadded": st.checkbox("Add publications section.", value=True)
+    }
+
+    resume_settings["experience_years_back"] = (
+        st.slider("How many years of work experience?", 0, 50, 10) if resume_settings["experience_section"] != "None" else 0
+    )
+
+with st.expander("Layout of the resume"):
+    # Makeup of the resume
+    st.write("### Resume Makeup")
+    layout_settings = {
+        "maincolor": st.color_picker("Header and line colour", "#0056b3"),
+        "backgroundcolor": st.color_picker("Background colour", "#f9f9f9"),
+        "textcolor": st.color_picker("Text colour", "#444444"),
+        # "font_family": st.selectbox("Font family", ["Arial", "Times New Roman", "Courier New",
+        #                                             "Verdana", "Georgia", "Roboto",
+        #                                             "Open Sans", "Lato", "Montserrat"]),
+        # "font_size": st.selectbox("Font size", ["x-small", "small", "medium", "large", "x-large"]),
+        # "line_height": st.slider("Line height (pixels)", 1, 3, 1.5),
+        "section_margin_top": st.slider("Margin top (pixels)", 0, 100, 10),
+        "section_margin_bottom": st.slider("Margin bottom (pixels)", 0, 100, 10),
+        "section_margin_left": st.slider("Margin left (pixels)", 0, 100, 10),
+        "section_margin_right": st.slider("Margin right (pixels)", 0, 100, 10),
+        "section_padding": st.slider("Padding (pixels)", 0, 100, 20),
+        "section_padding_left": st.slider("Padding left (pixels)", 0, 100, 20),
+        "section_padding_right": st.slider("Padding right (pixels)", 0, 100, 20),
+        "section_padding_top": st.slider("Padding top (pixels)", 0, 100, 20),
+        "section_padding_bottom": st.slider("Padding bottom (pixels)", 0, 100, 20),
+        "section_border_left": st.slider("Border left (the vertical line) (pixels)", 0, 100, 4),
+    }
+
+# with st.expander("Preview resume data"):
+#     resume_data = fetch_resume_data(
+#         db_path, person_id=PersonId, language_id=selected_language_id, selected_project_ids=ordered_project_ids, **resume_settings
+#     )
+#     st.write(resume_data)
 
 
 # Button to generate resume
 if st.button('Generate Resume'):
     with st.spinner('Generating your resume...'):
-        resume_data = fetch_resume_data(db_path, person_id=PersonId, 
-                                        language_id=selected_language_id,
-                                        selected_project_ids=ordered_project_ids,
-                                        experience_years_back=experience_years_back)
+        resume_data = fetch_resume_data(
+            db_path, person_id=PersonId, language_id=selected_language_id, selected_project_ids=ordered_project_ids, **resume_settings
+        )
         person_name = resume_data["persons"]["Name"].replace(" ", "_")
         # st.write(resume_data)
         
+        px_fields = {
+            "section_margin_top",
+            "section_margin_bottom",
+            "section_margin_left",
+            "section_margin_right",
+            "section_padding",
+            "section_padding_left",
+            "section_padding_right",
+            "section_padding_top",
+            "section_padding_bottom",
+            "section_border_left",
+        }
+        # Voeg "px" toe aan de juiste instellingen
+        resume_data["layout"] = {
+            key: f"{value}px" if key in px_fields else value
+            for key, value in layout_settings.items()
+        }
+        # st.write(f"Layout settings: {resume_data['layout']}")
+
         # Datestring for the output file
         datestring = datetime.datetime.now().strftime("%Y%m%d")
-        if targetorg and gdprcompliant:
+
+        # Output filename
+        if targetorg and resume_settings["gdprcompliant"]:
             pdf_filename = f'resume_{person_name}_{selected_language}_{targetorg}_{datestring}_GDPR.pdf'
         elif targetorg:
             pdf_filename = f'resume_{person_name}_{selected_language}_{targetorg}_{datestring}.pdf'
-        elif gdprcompliant:
+        elif resume_settings["gdprcompliant"]:
             pdf_filename = f'resume_{person_name}_{selected_language}_{datestring}_GDPR.pdf'
         else:
             pdf_filename = f'resume_{person_name}_{selected_language}_{datestring}.pdf'
 
         output_path = f'output/{pdf_filename}'
         
-        output_from_function, pdfdata = generate_resume_pdf(resume_data, template_path, output_path, selected_language, gdprcompliant)
+        output_from_function, pdfdata = generate_resume_pdf(resume_data, template_path, output_path,
+                                                            selected_language, resume_settings["gdprcompliant"])
         st.download_button(label="Download CV as PDF", data=pdfdata, file_name=pdf_filename, mime="application/pdf")
