@@ -17,7 +17,7 @@
                 content: "CV {{ persons.Name }}, " counter(page) " of " counter(pages);
                 font-family: Arial, sans-serif;
                 font-size: 10px;
-                color: #555;
+                color: {{ layout.maincolor }};
             }
         }
         header {
@@ -26,7 +26,7 @@
             left: 0;
             right: 0;
             background-color: white;
-            border-bottom: 4px solid #0056b3;
+            border-bottom: 4px solid {{ layout.maincolor }};
             /* border: 0.1cm solid black; */
         }
         body {
@@ -34,18 +34,24 @@
             box-decoration-break: clone;
             font-family: 'Roboto', sans-serif; /* Gebruik een bedrijfslettertype */
             font-size: x-small;
-            background-color: #f9f9f9;        /* Bedrijfsachtergrondkleur */
-            color: #444;                     /* Primaire tekstkleur */
+            background-color: {{ layout.backgroundcolor }};        /* Background colour */
+            color: #444;                     /* Primary text colourr */
             line-height: 1.6;
         }
         h1, h2 {
             margin-top: 60px;
-            color: #0056b3; /* Bedrijfskleur voor koppen */
+            color: {{ layout.maincolor }}; /* Colour for headings */
         }
         .section {
-            margin-top: 10px;
-            border-left: 4px solid #0056b3; /* Accentkleur aan de linkerzijde */
-            padding: 20px;
+            margin-top: {{ layout.section_margin_top }};
+            margin-bottom: {{ layout.section_margin_bottom }};
+            margin-left: {{ layout.section_margin_left }};
+            {# border-left: 4px solid #0056b3; #}
+            border-left: {{ layout.section_border_left }} solid {{ layout.maincolor }}; /* Accent colour left side */
+            padding-left: {{ layout.section_padding_left }};
+            padding-right: {{ layout.section_padding_right }};
+            padding-top: {{ layout.section_padding_top }};
+            padding-bottom: {{ layout.section_padding_bottom }};
         }
         .intro-text {
             border: 0px;
@@ -108,8 +114,12 @@
 </head>
 
 <header>
-    <img src="https://dikw.com/wp-content/uploads/2023/10/DIKW-Intelligence-XL-transparant.png"
-    style="width: 20%; max-height: 150px; object-fit: contain; float: right">
+    {% for setting in settings %}
+        {% if setting.SettingName == "CompanyLogo" %}
+            <img src="{{ setting.SettingValue }}" alt="Company logo"
+                style="width: 20%; max-height: 150px; object-fit: contain; float: right">
+        {% endif %}
+    {% endfor %}
 </header>
 
 <body>
@@ -149,7 +159,7 @@
 
 
     <div class="section">
-        <h2>Top projecten</h2>
+        <h2>Top projects</h2>
         {% for project in projects %}
             <h3>{{ project.ProjectName }}</h3>
             <!-- <p><strong>Purpose:</strong> {{ project.purpose }}</p> -->
@@ -161,22 +171,48 @@
     </div>
 
     {% if experiences|length > 0 %}
-        <div class="section">
-            <h2>Relevant work experience</h2>
-            {% for experience in experiences %}
-                <h4>Organisation: {{ experience.OrganisationName }}</h4>
-                <h4>Role: {{ experience.JobTitle }}</h4>
-                {% if experience.EndDate == None %}
-                    <p><strong>Periode:</strong> {{ experience.StartDate[:-3] }} - heden</p>
-                {% else %}
-                	<p><strong>Period:</strong> {{ experience.StartDate }} - {{ experience.EndDate }}</p>
-                {% endif %}
-                <p><strong>Beschrijving:</strong>
-                <div class="experience-text"></p>
-                    <p>{{ experience.Description }}</p>
-                </div>
-            {% endfor %}
-        </div>
+        {% if experience_section == "Full" %}
+            <div class="section">
+                <h2>Relevant work experience</h2>
+                {% for experience in experiences %}
+                    <h4>Organisation: {{ experience.OrganisationName }}</h4>
+                    <h4>Role: {{ experience.JobTitle }}</h4>
+                    {% if experience.EndDate == None %}
+                        <p><strong>Period:</strong> {{ experience.StartDate[:-3] }} - current</p>
+                    {% else %}
+                        <p><strong>Period:</strong> {{ experience.StartDate[:-3] }} - {{ experience.EndDate[:-3] }}</p>
+                    {% endif %}
+                    <p><strong>Description:</strong>
+                    <div class="experience-text"></p>
+                        <p>{{ experience.Description }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% elif experience_section == "Brief" %}
+            <div class="section">
+                <h2>Relevant work experience</h2>
+                <table style="width:100%">
+                    <tr>
+                        <th>Organisation</th>
+                        <th>Role</th>
+                        <th>Period</th>
+                    </tr>
+                    {% for experience in experiences %}
+                        <tr>
+                            <td>{{ experience.OrganisationName }}</td>
+                            <td>{{ experience.JobTitle }}</td>
+                            <td>
+                                {% if experience.EndDate == None %}
+                                    {{ experience.StartDate[:-3] }} - current
+                                {% else %}
+                                    {{ experience.StartDate[:-3] }} - {{ experience.EndDate[:-3] }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
     {% endif %}
 
     {% if certificates|length > 0 %}

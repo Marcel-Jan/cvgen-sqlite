@@ -91,6 +91,7 @@ apisubmitted = st.button("Save API Keys")
 
 if apisubmitted:
     set_key('.env', 'DEEPL_APIKEY', deepl_apikey)
+    st.success("API keys saved!")
 
 
 # Choose the company logo url
@@ -113,6 +114,7 @@ submitted = st.button("Save settings")
 if submitted:
     # Update the settings in the database
     upsert_settings(db_path, setting_name="CompanyLogo", setting_value=company_logo)
+    st.success("Settings saved!")
 
 
 st.write("### Current settings")
