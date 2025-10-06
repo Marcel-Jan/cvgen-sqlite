@@ -4,15 +4,12 @@ import streamlit as st
 from utils.database import fetch_organisations, add_organisation, fetch_languages
 from utils.database import fetch_projectroles_for_org, add_project, upsert_projectrole
 from utils.database import fetch_organisation_id
-import deepl
 
 
 # Path to database and templates
 db_path = st.session_state.database
-deeplapikey = st.session_state.deeplapikey
-deepl_client = deepl.DeepLClient(deeplapikey)
 
-# Titel van de app
+# Title of the app
 st.title("Add projects")
 
 # Retrieve persisted user name from session state
@@ -92,7 +89,7 @@ else:
     start_date = st.date_input("Start Date", selected_project["StartDate"])
     end_date = st.date_input("End Date", selected_project["EndDate"])
 
-# Submit-knop
+# Submit-button
 submitted = st.button("Add/Update Project Entry")
 
 # Submit the form
@@ -106,76 +103,84 @@ if submitted:
         st.error("Organisation and Project name field is required.")
 
 
-# Talenlijst
-LANGUAGES = {
-    'af': 'Afrikaans',
-    'ar': 'Arabic',
-    'bn': 'Bengali',
-    'zh-cn': 'Chinese (Simplified)',
-    'nl': 'Nederlands',
-    'en-gb': 'English',
-    'fr': 'French',
-    'de': 'German',
-    'hi': 'Hindi',
-    'it': 'Italian',
-    'ja': 'Japanese',
-    'ko': 'Korean',
-    'pt': 'Portuguese',
-    'ru': 'Russian',
-    'es': 'Spanish',
-}
+if not st.session_state.deeplapikey:
+    st.info("To translate your headline to another language, please set your DeepL API key in the Settings page.")
+    st.stop()
+else:
+    import deepl
+    deeplapikey = st.session_state.deeplapikey
+    deepl_client = deepl.DeepLClient(deeplapikey)
 
-# Translation part of the page
-st.write("## Translate Project Details")
+    # List of languages
+    LANGUAGES = {
+        'af': 'Afrikaans',
+        'ar': 'Arabic',
+        'bn': 'Bengali',
+        'zh-cn': 'Chinese (Simplified)',
+        'nl': 'Nederlands',
+        'en-gb': 'English',
+        'fr': 'French',
+        'de': 'German',
+        'hi': 'Hindi',
+        'it': 'Italian',
+        'ja': 'Japanese',
+        'ko': 'Korean',
+        'pt': 'Portuguese',
+        'ru': 'Russian',
+        'es': 'Spanish',
+    }
 
-# Remove source language from the list of destination languages
-language_names.remove(selected_language)
+    # Translation part of the page
+    st.write("## Translate Project Details")
 
-dest_language = st.selectbox(
-    'Select destination language of your resume:',
-    options=language_names
-)
+    # Remove source language from the list of destination languages
+    language_names.remove(selected_language)
 
-# Get the language ID for the selected language. It is just one value, not a list.
-source_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == selected_language][0]
-dest_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == dest_language][0]
+    dest_language = st.selectbox(
+        'Select destination language of your resume:',
+        options=language_names
+    )
 
-# Get the language code for the selected language
-source_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == selected_language][0]
-target_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == dest_language][0]
+    # Get the language ID for the selected language. It is just one value, not a list.
+    source_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == selected_language][0]
+    dest_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == dest_language][0]
 
-# If the length of the source_lang is larger than 2, it is a language code with a region code. Remove the region code.
-if len(source_lang) > 2:
-    source_lang = source_lang[:2]
+    # Get the language code for the selected language
+    source_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == selected_language][0]
+    target_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == dest_language][0]
 
-print(f"source_lang {source_lang}")
-print(f"target_lang {target_lang}")
+    # If the length of the source_lang is larger than 2, it is a language code with a region code. Remove the region code.
+    if len(source_lang) > 2:
+        source_lang = source_lang[:2]
 
-# Translate the activity with Google Translate
-if projectname and project_role and deeplapikey:
-    translated_projectname = deepl_client.translate_text(projectname, source_lang=source_lang, target_lang=target_lang)
-    translated_rolename = deepl_client.translate_text(project_role, source_lang=source_lang, target_lang=target_lang)
+    print(f"source_lang {source_lang}")
+    print(f"target_lang {target_lang}")
 
-    if project_purpose:
-        translated_purpose = deepl_client.translate_text(project_purpose, source_lang=source_lang, target_lang=target_lang)
-    else:
-        translated_purpose = ""
+    # Translate the activity with Google Translate
+    if projectname and project_role and deeplapikey:
+        translated_projectname = deepl_client.translate_text(projectname, source_lang=source_lang, target_lang=target_lang)
+        translated_rolename = deepl_client.translate_text(project_role, source_lang=source_lang, target_lang=target_lang)
 
-    translated_roletext = deepl_client.translate_text(project_role_text, source_lang=source_lang, target_lang=target_lang)
-    translated_proudof = deepl_client.translate_text(project_proud_of, source_lang=source_lang, target_lang=target_lang)
-    edited_projectname = st.text_area("Translated project name:", translated_projectname)
-    edited_rolename = st.text_area("Translated role name:", translated_rolename)
-    edited_purpose = st.text_area("Translated purpose:", translated_purpose)
-    edited_roletext = st.text_area("Translated role description:", translated_roletext)
-    edited_proudof = st.text_area("Translated proud of:", translated_proudof)
+        if project_purpose:
+            translated_purpose = deepl_client.translate_text(project_purpose, source_lang=source_lang, target_lang=target_lang)
+        else:
+            translated_purpose = ""
 
-    addtransbutton = st.button("Add Translated Project Details")
+        translated_roletext = deepl_client.translate_text(project_role_text, source_lang=source_lang, target_lang=target_lang)
+        translated_proudof = deepl_client.translate_text(project_proud_of, source_lang=source_lang, target_lang=target_lang)
+        edited_projectname = st.text_area("Translated project name:", translated_projectname)
+        edited_rolename = st.text_area("Translated role name:", translated_rolename)
+        edited_purpose = st.text_area("Translated purpose:", translated_purpose)
+        edited_roletext = st.text_area("Translated role description:", translated_roletext)
+        edited_proudof = st.text_area("Translated proud of:", translated_proudof)
 
-    # Verwerk het formulier
-    if addtransbutton:
-        # add_project(db_path, PersonId, selected_org, edited_projectname, edited_rolename, edited_roletext,
-        #                 edited_proudof, start_date, end_date, edited_purpose, dest_language_id)
-        upsert_projectrole(db_path, PersonId, selected_orgid, edited_projectname, edited_rolename,
-                        edited_roletext, edited_proudof, start_date, end_date,
-                        edited_purpose, dest_language_id)
-        st.success("Translated project details successfully added!")
+        addtransbutton = st.button("Add Translated Project Details")
+
+        # Verwerk het formulier
+        if addtransbutton:
+            # add_project(db_path, PersonId, selected_org, edited_projectname, edited_rolename, edited_roletext,
+            #                 edited_proudof, start_date, end_date, edited_purpose, dest_language_id)
+            upsert_projectrole(db_path, PersonId, selected_orgid, edited_projectname, edited_rolename,
+                            edited_roletext, edited_proudof, start_date, end_date,
+                            edited_purpose, dest_language_id)
+            st.success("Translated project details successfully added!")

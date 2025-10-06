@@ -3,15 +3,12 @@
 import streamlit as st
 from utils.database import add_organisation, fetch_languages, fetch_experience_for_org
 from utils.database import fetch_organisations, fetch_organisation_id, upsert_experience
-import deepl
 
 
 # Path to database and templates
 db_path = st.session_state.database
-deeplapikey = st.session_state.deeplapikey
-deepl_client = deepl.DeepLClient(deeplapikey)
 
-# Titel van de app
+# Title of the app
 st.title("Resume - Work Experience")
 
 # Retrieve persisted user name from session state
@@ -123,66 +120,74 @@ else:
             st.success("Work Experience successfully added/updated!")
 
 
-# Talenlijst
-LANGUAGES = {
-    'af': 'Afrikaans',
-    'ar': 'Arabic',
-    'bn': 'Bengali',
-    'zh-cn': 'Chinese (Simplified)',
-    'nl': 'Nederlands',
-    'en-gb': 'English',
-    'fr': 'French',
-    'de': 'German',
-    'hi': 'Hindi',
-    'it': 'Italian',
-    'ja': 'Japanese',
-    'ko': 'Korean',
-    'pt': 'Portuguese',
-    'ru': 'Russian',
-    'es': 'Spanish',
-}
+if not st.session_state.deeplapikey:
+    st.info("To translate your headline to another language, please set your DeepL API key in the Settings page.")
+    st.stop()
+else:
+    import deepl
+    deeplapikey = st.session_state.deeplapikey
+    deepl_client = deepl.DeepLClient(deeplapikey)
 
-# Translation part of the page
-st.write("## Translate Work Experience Details")
+    # List of languages
+    LANGUAGES = {
+        'af': 'Afrikaans',
+        'ar': 'Arabic',
+        'bn': 'Bengali',
+        'zh-cn': 'Chinese (Simplified)',
+        'nl': 'Nederlands',
+        'en-gb': 'English',
+        'fr': 'French',
+        'de': 'German',
+        'hi': 'Hindi',
+        'it': 'Italian',
+        'ja': 'Japanese',
+        'ko': 'Korean',
+        'pt': 'Portuguese',
+        'ru': 'Russian',
+        'es': 'Spanish',
+    }
 
-# Remove source language from the list of destination languages
-language_names.remove(selected_language)
+    # Translation part of the page
+    st.write("## Translate Work Experience Details")
 
-dest_language = st.selectbox(
-    'Select destination language of your resume:',
-    options=language_names
-)
+    # Remove source language from the list of destination languages
+    language_names.remove(selected_language)
 
-# Get the language ID for the selected language. It is just one value, not a list.
-source_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == selected_language][0]
-dest_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == dest_language][0]
+    dest_language = st.selectbox(
+        'Select destination language of your resume:',
+        options=language_names
+    )
 
-# Get the language code for the selected language
-source_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == selected_language][0]
-target_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == dest_language][0]
+    # Get the language ID for the selected language. It is just one value, not a list.
+    source_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == selected_language][0]
+    dest_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == dest_language][0]
 
-# If the length of the source_lang is larger than 2, it is a language code with a region code. Remove the region code.
-if len(source_lang) > 2:
-    source_lang = source_lang[:2]
+    # Get the language code for the selected language
+    source_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == selected_language][0]
+    target_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == dest_language][0]
 
-print(f"source_lang {source_lang}")
-print(f"target_lang {target_lang}")
+    # If the length of the source_lang is larger than 2, it is a language code with a region code. Remove the region code.
+    if len(source_lang) > 2:
+        source_lang = source_lang[:2]
+
+    print(f"source_lang {source_lang}")
+    print(f"target_lang {target_lang}")
 
 
-# Translate the activity with Google Translate
-if exp_jobtitle and exp_shortdesc and exp_description and deeplapikey:
-    translated_jobtitle = deepl_client.translate_text(exp_jobtitle, source_lang=source_lang, target_lang=target_lang)
-    translated_shortdesc = deepl_client.translate_text(exp_shortdesc, source_lang=source_lang, target_lang=target_lang)
-    translated_description = deepl_client.translate_text(exp_description, source_lang=source_lang, target_lang=target_lang)
+    # Translate the activity with Google Translate
+    if exp_jobtitle and exp_shortdesc and exp_description and deeplapikey:
+        translated_jobtitle = deepl_client.translate_text(exp_jobtitle, source_lang=source_lang, target_lang=target_lang)
+        translated_shortdesc = deepl_client.translate_text(exp_shortdesc, source_lang=source_lang, target_lang=target_lang)
+        translated_description = deepl_client.translate_text(exp_description, source_lang=source_lang, target_lang=target_lang)
 
-    edited_jobtitle = st.text_input("Translated job title:", translated_jobtitle)
-    edited_shortdesc = st.text_input("Translated description in one sentence:", translated_shortdesc)
-    edited_description = st.text_area("Translated full description:", translated_description, text_area_height)
+        edited_jobtitle = st.text_input("Translated job title:", translated_jobtitle)
+        edited_shortdesc = st.text_input("Translated description in one sentence:", translated_shortdesc)
+        edited_description = st.text_area("Translated full description:", translated_description, text_area_height)
 
-    addtransbutton = st.button("Add Translated Work Experience Details")
+        addtransbutton = st.button("Add Translated Work Experience Details")
 
-    # Verwerk het formulier
-    if addtransbutton:
-        upsert_experience(db_path, PersonId, selected_org_id, edited_jobtitle, edited_shortdesc,
-                                edited_description, start_date, end_date, dest_language_id)
-        st.success("Translated work experience details successfully added!")
+        # Verwerk het formulier
+        if addtransbutton:
+            upsert_experience(db_path, PersonId, selected_org_id, edited_jobtitle, edited_shortdesc,
+                                    edited_description, start_date, end_date, dest_language_id)
+            st.success("Translated work experience details successfully added!")

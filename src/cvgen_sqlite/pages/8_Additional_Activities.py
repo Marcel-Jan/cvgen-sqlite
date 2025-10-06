@@ -4,13 +4,10 @@ import streamlit as st
 from utils.database import fetch_languages, fetch_activities
 from utils.database import upsert_activity
 import datetime
-import deepl
 
 
 # Path to database and templates
 db_path = st.session_state.database
-deeplapikey = st.session_state.deeplapikey
-deepl_client = deepl.DeepLClient(deeplapikey)
 
 # Titel van de app
 st.title("Additional activites")
@@ -71,85 +68,89 @@ else:
     upsert_startdate = st.date_input("StartDate", selected_activity["StartDate"], min_value=selected_activity["StartDate"])
     upsert_enddate = st.date_input("EndDate", selected_activity["EndDate"])
 
-    # Submit-knop
+    # Submit-button
     submitted = st.button("Update Activity")
 
-# Verwerk het formulier
+# Submit the form
 if submitted:
     upsert_activity(db_path, PersonId, upsert_activityname, upsert_description,
                     upsert_startdate, upsert_enddate, selected_language_id)
     st.success("Activity successfully added/updated!")
 
 
-# Translate introduction
-st.markdown("### Translate your activity to another language")
+if not st.session_state.deeplapikey:
+    st.info("To translate your headline to another language, please set your DeepL API key in the Settings page.")
+    st.stop()
+else:
+    import deepl
+    deeplapikey = st.session_state.deeplapikey
+    deepl_client = deepl.DeepLClient(deeplapikey)
+    
+    LANGUAGES = {
+        'af': 'Afrikaans',
+        'ar': 'Arabic',
+        'bn': 'Bengali',
+        'zh-cn': 'Chinese (Simplified)',
+        'nl': 'Nederlands',
+        'en-gb': 'English',
+        'fr': 'French',
+        'de': 'German',
+        'hi': 'Hindi',
+        'it': 'Italian',
+        'ja': 'Japanese',
+        'ko': 'Korean',
+        'pt': 'Portuguese',
+        'ru': 'Russian',
+        'es': 'Spanish',
+    }
 
-# Talenlijst
-LANGUAGES = {
-    'af': 'Afrikaans',
-    'ar': 'Arabic',
-    'bn': 'Bengali',
-    'zh-cn': 'Chinese (Simplified)',
-    'nl': 'Nederlands',
-    'en-gb': 'English',
-    'fr': 'French',
-    'de': 'German',
-    'hi': 'Hindi',
-    'it': 'Italian',
-    'ja': 'Japanese',
-    'ko': 'Korean',
-    'pt': 'Portuguese',
-    'ru': 'Russian',
-    'es': 'Spanish',
-}
+    # Remove source language from the list of destination languages
+    language_names.remove(selected_language)
 
-# Remove source language from the list of destination languages
-language_names.remove(selected_language)
+    dest_language = st.selectbox(
+        'Select destination language of your resume:',
+        options=language_names
+    )
 
-dest_language = st.selectbox(
-    'Select destination language of your resume:',
-    options=language_names
-)
+    # Get the language ID for the selected language. It is just one value, not a list.
+    source_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == selected_language][0]
+    dest_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == dest_language][0]
 
-# Get the language ID for the selected language. It is just one value, not a list.
-source_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == selected_language][0]
-dest_language_id = [language['LanguageId'] for language in languages if language['LanguageName'] == dest_language][0]
+    # Get the language code for the selected language
+    source_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == selected_language][0]
+    target_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == dest_language][0]
 
-# Get the language code for the selected language
-source_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == selected_language][0]
-target_lang = [lang for lang in LANGUAGES if LANGUAGES[lang] == dest_language][0]
+    # If the length of the source_lang is larger than 2, it is a language code with a region code. Remove the region code.
+    if len(source_lang) > 2:
+        source_lang = source_lang[:2]
 
-# If the length of the source_lang is larger than 2, it is a language code with a region code. Remove the region code.
-if len(source_lang) > 2:
-    source_lang = source_lang[:2]
+    print(f"source_lang {source_lang}")
+    print(f"target_lang {target_lang}")
 
-print(f"source_lang {source_lang}")
-print(f"target_lang {target_lang}")
+    # Translate the activity with Google Translate
+    try:
+        translated_activityname = deepl_client.translate_text(upsert_activityname, source_lang=source_lang, target_lang=target_lang)
+        translated_description = deepl_client.translate_text(upsert_description, source_lang=source_lang, target_lang=target_lang)
+        edited_activityname = st.text_area("Translated activity name:", translated_activityname)
+        edited_description = st.text_area("Translated description:", translated_description)
+    except ValueError:
+        pass
 
-# Translate the activity with Google Translate
-try:
-    translated_activityname = deepl_client.translate_text(upsert_activityname, source_lang=source_lang, target_lang=target_lang)
-    translated_description = deepl_client.translate_text(upsert_description, source_lang=source_lang, target_lang=target_lang)
-    edited_activityname = st.text_area("Translated activity name:", translated_activityname)
-    edited_description = st.text_area("Translated description:", translated_description)
-except ValueError:
-    pass
+    addactbutton = st.button("Add Activity")
 
-addactbutton = st.button("Add Activity")
+    # Submit the form
+    if addactbutton:
+        upsert_activity(db_path, PersonId, edited_activityname, edited_description,
+                        upsert_startdate, upsert_enddate, dest_language_id)
+        st.success("Activity successfully added!")
 
-# Verwerk het formulier
-if addactbutton:
-    upsert_activity(db_path, PersonId, edited_activityname, edited_description,
-                    upsert_startdate, upsert_enddate, dest_language_id)
-    st.success("Activity successfully added!")
+    # Show Activities
+    st.write("### Your list of additional activities:")
+    activitylist = fetch_activities(db_path, PersonId, selected_language_id)
 
-# Show Activities
-st.write("### Your list of additional activities:")
-activitylist = fetch_activities(db_path, PersonId, selected_language_id)
-
-# Remove columns from the list
-for activity in activitylist:
-    del activity['ActivityId']
-    # del pub['Activities']
-    del activity['StartYear']
-st.table(activitylist)
+    # Remove columns from the list
+    for activity in activitylist:
+        del activity['ActivityId']
+        # del pub['Activities']
+        del activity['StartYear']
+    st.table(activitylist)
